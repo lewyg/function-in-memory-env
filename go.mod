@@ -13,7 +13,6 @@ require (
 	google.golang.org/protobuf v1.33.0
 	k8s.io/apiextensions-apiserver v0.29.1
 	k8s.io/apimachinery v0.29.3
-	sigs.k8s.io/controller-tools v0.14.0
 )
 
 require (
