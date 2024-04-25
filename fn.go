@@ -94,8 +94,8 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 		return rsp, nil
 	}
 
-	desiredComposed[resource.Name("in-memory-env")] = &resource.DesiredComposed{Resource: desiredEnvConfig}
-	desiredComposed[resource.Name("in-memory-env")].Ready = resource.ReadyTrue
+	desiredComposed[("in-memory-env")] = &resource.DesiredComposed{Resource: desiredEnvConfig}
+	desiredComposed[("in-memory-env")].Ready = resource.ReadyTrue
 
 	f.log.Info("constructed in-memory EnvConfig", "inMemoryEnv:", desiredEnvConfig)
 
