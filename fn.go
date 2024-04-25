@@ -28,6 +28,8 @@ type Function struct {
 
 const (
 	FunctionContextKeyEnvironment = "apiextensions.crossplane.io/environment"
+
+	annotationKeyInMemoryEnvEnabled = "inmemoryenv.fn.crossplane.io/enabled"
 )
 
 // RunFunction runs the Function.
@@ -40,6 +42,11 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	observedComposite, err := request.GetObservedCompositeResource(req)
 	if err != nil {
 		response.Fatal(rsp, errors.Wrapf(err, "cannot get observed composite resource from %T", req))
+		return rsp, nil
+	}
+
+	if inMemoryEnvEnabled, found := observedComposite.Resource.GetAnnotations()[annotationKeyInMemoryEnvEnabled]; inMemoryEnvEnabled != "true" || !found {
+		f.log.Debug("In-memory environment config not enabled")
 		return rsp, nil
 	}
 
@@ -84,7 +91,6 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	envConfigLabels["xr-kind"] = observedComposite.Resource.GetKind()
 	envConfigLabels["xr-name"] = observedComposite.Resource.GetName()
 
-	f.log.Info("EnvironmentConfig labels", "labels", envConfigLabels)
 	envConfig.SetLabels(envConfigLabels)
 
 	_ = xpv1alpha1.AddToScheme(composed.Scheme)
