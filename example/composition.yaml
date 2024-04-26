@@ -8,10 +8,6 @@ spec:
     kind: XR
   mode: Pipeline
   pipeline:
-  - step: run-the-template
+  - step: in-memory-env
     functionRef:
       name: function-in-memory-env
-    input:
-      apiVersion: template.fn.crossplane.io/v1beta1
-      kind: Input
-      example: "Hello world"
