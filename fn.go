@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
+	"slices"
+	"strings"
+
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/json"
-	"slices"
-	"strings"
 
 	xpv1alpha1 "github.com/crossplane/crossplane/apis/apiextensions/v1alpha1"
 	"github.com/crossplane/function-sdk-go/errors"
