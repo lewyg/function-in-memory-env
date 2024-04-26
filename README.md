@@ -1,7 +1,7 @@
 # function-in-memory-env
 [![CI](https://github.com/lewyg/function-in-memory-env/actions/workflows/ci.yml/badge.svg)](https://github.com/lewyg/function-in-memory-env/actions/workflows/ci.yml)
 
-Function automatically creates [EnvironmentConfig] (https://docs.crossplane.io/latest/concepts/environment-configs/) that represents in-memory environment of XR.
+Function automatically creates [EnvironmentConfig](https://docs.crossplane.io/latest/concepts/environment-configs/) that represents in-memory environment of XR.
 
 Add it as a last step in pipeline, to include all patches from previous steps:
 ```yaml
