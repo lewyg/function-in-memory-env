@@ -2,21 +2,20 @@ package main
 
 import (
 	"context"
-	"github.com/crossplane/function-sdk-go/resource/composed"
+	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/json"
 	"slices"
 	"strings"
 
+	xpv1alpha1 "github.com/crossplane/crossplane/apis/apiextensions/v1alpha1"
 	"github.com/crossplane/function-sdk-go/errors"
 	"github.com/crossplane/function-sdk-go/logging"
 	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/resource"
+	"github.com/crossplane/function-sdk-go/resource/composed"
 	"github.com/crossplane/function-sdk-go/response"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/util/json"
-
-	xpv1alpha1 "github.com/crossplane/crossplane/apis/apiextensions/v1alpha1"
-	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
 // Function returns whatever response you ask it to.
@@ -27,7 +26,7 @@ type Function struct {
 }
 
 const (
-	FunctionContextKeyEnvironment = "apiextensions.crossplane.io/environment"
+	functionContextKeyEnvironment = "apiextensions.crossplane.io/environment"
 
 	annotationKeyInMemoryEnvEnabled = "inmemoryenv.fn.crossplane.io/enabled"
 )
@@ -58,36 +57,20 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	}
 	f.log.Debug("Found desired resources", "count", len(desiredComposed))
 
-	inMemoryEnvRaw, ok := request.GetContextKey(req, FunctionContextKeyEnvironment)
+	inMemoryEnvRaw, ok := request.GetContextKey(req, functionContextKeyEnvironment)
 	if ok {
 		inputEnv := &unstructured.Unstructured{}
 		if err := resource.AsObject(inMemoryEnvRaw.GetStructValue(), inputEnv); err != nil {
-			response.Fatal(rsp, errors.Wrapf(err, "cannot get Composition environment from %T context key %q", req, FunctionContextKeyEnvironment))
+			response.Fatal(rsp, errors.Wrapf(err, "cannot get Composition environment from %T context key %q", req, functionContextKeyEnvironment))
 			return rsp, nil
 		}
-		f.log.Debug("Loaded Composition environment from Function context", "context-key", FunctionContextKeyEnvironment)
+		f.log.Debug("Loaded Composition environment from Function context", "context-key", functionContextKeyEnvironment)
 	}
 
-	envConfig := &xpv1alpha1.EnvironmentConfig{}
-	envConfig.Data = make(map[string]extv1.JSON)
-
-	inMemoryEnv := inMemoryEnvRaw.GetStructValue().AsMap()
-
-	keysToSkip := []string{"kind", "apiVersion"}
-	for key, value := range inMemoryEnv {
-		if slices.Contains(keysToSkip, key) {
-			continue
-		}
-
-		jsonBytes, err := json.Marshal(value)
-		if err != nil {
-		}
-
-		envConfig.Data[key] = extv1.JSON{Raw: jsonBytes}
-	}
+	envConfig := f.createEnvConfig(inMemoryEnvRaw.GetStructValue().AsMap())
 
 	envConfigLabels := make(map[string]string)
-	envConfigLabels["xr-apiversion"] = strings.Replace(observedComposite.Resource.GetAPIVersion(), "/", "_", -1)
+	envConfigLabels["xr-apiversion"] = strings.ReplaceAll(observedComposite.Resource.GetAPIVersion(), "/", "_")
 	envConfigLabels["xr-kind"] = observedComposite.Resource.GetKind()
 	envConfigLabels["xr-name"] = observedComposite.Resource.GetName()
 
@@ -111,4 +94,21 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	}
 
 	return rsp, nil
+}
+
+func (f *Function) createEnvConfig(data map[string]interface{}) *xpv1alpha1.EnvironmentConfig {
+	envConfig := &xpv1alpha1.EnvironmentConfig{}
+	envConfig.Data = make(map[string]extv1.JSON)
+
+	keysToSkip := []string{"kind", "apiVersion"}
+	for key, value := range data {
+		if slices.Contains(keysToSkip, key) {
+			continue
+		}
+
+		jsonBytes, _ := json.Marshal(value)
+		envConfig.Data[key] = extv1.JSON{Raw: jsonBytes}
+	}
+
+	return envConfig
 }
