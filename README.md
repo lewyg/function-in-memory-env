@@ -1,5 +1,5 @@
 # function-in-memory-env
-[![CI](https://github.com/crossplane/function-in-memory-env/actions/workflows/ci.yml/badge.svg)](https://github.com/crossplane/function-in-memory-env/actions/workflows/ci.yml)
+[![CI](https://github.com/lewyg/function-in-memory-env/actions/workflows/ci.yml/badge.svg)](https://github.com/lewyg/function-in-memory-env/actions/workflows/ci.yml)
 
 ## Developing this function
 
