@@ -70,7 +70,7 @@ jobs:
   # We want to build most packages for the amd64 and arm64 architectures. To
   # speed this up we build single-platform packages in parallel. We then upload
   # those packages to GitHub as a build artifact. The push job downloads those
-  # artifacts and pushes them as a single multi-platform package. 
+  # artifacts and pushes them as a single multi-platform package.
   build:
     runs-on: ubuntu-22.04
     strategy:
@@ -108,13 +108,13 @@ jobs:
           build-args:
             GO_VERSION=${{ env.GO_VERSION }}
           outputs: type=docker,dest=runtime-${{ matrix.arch }}.tar
-      
+
       - name: Setup the Crossplane CLI
         run: "curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | sh"
 
       - name: Build Package
         run: ./crossplane xpkg build --package-file=${{ matrix.arch }}.xpkg --package-root=package/ --embed-runtime-image-tarball=runtime-${{ matrix.arch }}.tar
-      
+
       - name: Upload Single-Platform Package
         uses: actions/upload-artifact@v4
         with:
@@ -143,13 +143,17 @@ jobs:
       - name: Setup the Crossplane CLI
         run: "curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | sh"
 
+#      - name: Login to Upbound
+#        uses: docker/login-action@v3
+#        if: env.XPKG_ACCESS_ID != ''
+#        with:
+#          registry: xpkg.upbound.io
+#          username: ${{ secrets.XPKG_ACCESS_ID }}
+#          password: ${{ secrets.XPKG_TOKEN }}
+
       - name: Login to Upbound
-        uses: docker/login-action@v3
         if: env.XPKG_ACCESS_ID != ''
-        with:
-          registry: xpkg.upbound.io
-          username: ${{ secrets.XPKG_ACCESS_ID }}
-          password: ${{ secrets.XPKG_TOKEN }}
+        run: "./crossplane --verbose xpkg login -u ${{ secrets.XPKG_ACCESS_ID }} -p ${{ secrets.XPKG_TOKEN }}"
 
       # If a version wasn't explicitly passed as a workflow_dispatch input we
       # default to version v0.0.0-<git-commit-date>-<git-short-sha>, for example
